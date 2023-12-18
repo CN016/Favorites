@@ -1,4 +1,4 @@
-package com.favorites.favorites;
+package com.favorites.favorites.utils;
 
 
 import io.jsonwebtoken.*;
