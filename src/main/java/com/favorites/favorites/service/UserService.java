@@ -3,8 +3,8 @@ package com.favorites.favorites.service;
 import com.favorites.favorites.mapper.UserMapper;
 import com.favorites.favorites.objects.StructK;
 import com.favorites.favorites.objects.User;
-import com.favorites.favorites.utils.JwtUtil;
 import com.favorites.favorites.utils.MD5Utils;
+import com.favorites.favorites.utils.SafeJwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -43,7 +43,7 @@ public class UserService {
         Map<String,Object> data = new HashMap<>();
         data.put("id",databaseUser.getId());
 
-        String token = JwtUtil.generate(data);
+        String token = SafeJwtUtil.generate(data);
         response.setHeader("token",token);
         return "登陆成功";
     }
@@ -75,7 +75,7 @@ public class UserService {
 
     public String setK(StructK k, HttpServletRequest request){
         String token = request.getHeader("token");
-        Claims claim = JwtUtil.getClaim(token);
+        Claims claim = SafeJwtUtil.getClaim(token);
         Integer id = (Integer) claim.get("id");
 
         if (!validatePassword(k.getK())){
