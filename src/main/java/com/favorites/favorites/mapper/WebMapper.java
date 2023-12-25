@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 @Mapper
 public interface WebMapper {
 
@@ -13,6 +15,6 @@ public interface WebMapper {
     void saveTheWeb( @Param("uid") Integer userId ,@Param("url") String url,@Param("name") String webUsername, @Param("p") String webPassword,@Param("e") String eventReminder );
 
     @Select("select * from t_web where user_id = #{uid}")
-    Web selectWebByUserId( @Param("uid") Integer userId );
+    List<Web> selectWebByUserId(@Param("uid") Integer userId );
 
 }

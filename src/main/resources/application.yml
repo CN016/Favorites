@@ -2,9 +2,9 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://xxx:3306/favorites
-    username: xxx
-    password: xxx
+    url: jdbc:mysql://127.0.0.1:3306/favorites
+    username: root
+    password:
 
 # Mybatis开启驼峰映射
 mybatis:
