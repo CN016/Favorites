@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.Map;
+
 
 @Controller
 public class UserController {
@@ -38,7 +40,16 @@ public class UserController {
         return service.setK(k, request);
     }
 
+    @RequestMapping(value = "/user/modify/k", method = RequestMethod.PUT)
+    @ResponseBody
+    public String modifyK(@RequestBody Map<String,String> map, HttpServletRequest request){
+        return service.modifyK(map,request);
+    }
 
-
+    @RequestMapping(value = "/user/modify/password", method = RequestMethod.PUT)
+    @ResponseBody
+    public String modifyUserPassword(@RequestBody Map<String,String> map, HttpServletRequest request){
+        return service.modifyPassword(map,request);
+    }
 
 }

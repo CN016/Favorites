@@ -5,10 +5,7 @@ import com.favorites.favorites.service.WebService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class WebController {
@@ -26,6 +23,18 @@ public class WebController {
     @ResponseBody
     public Object getWebInfo(HttpServletRequest request){
         return service.get(request);
+    }
+
+    @RequestMapping(value = "/favorites/delete/{id}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public Object deleteWebInfo(@PathVariable String id , HttpServletRequest request){
+        return service.delete(request,id);
+    }
+
+    @RequestMapping(value = "/favorites/modify", method = RequestMethod.PUT)
+    @ResponseBody
+    public Object modifyWebInfo(@RequestBody Web web , HttpServletRequest request){
+        return service.modify(web,request);
     }
 
 }

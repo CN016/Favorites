@@ -1,8 +1,12 @@
 package com.favorites.favorites.service;
 
+import com.alibaba.druid.util.StringUtils;
 import com.favorites.favorites.mapper.UserMapper;
+import com.favorites.favorites.mapper.WebMapper;
 import com.favorites.favorites.objects.StructK;
 import com.favorites.favorites.objects.User;
+import com.favorites.favorites.objects.Web;
+import com.favorites.favorites.utils.EncryptionUtils;
 import com.favorites.favorites.utils.MD5Utils;
 import com.favorites.favorites.utils.SafeJwtUtil;
 import io.jsonwebtoken.Claims;
@@ -12,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import static com.favorites.favorites.utils.PasswordUtil.validatePassword;
@@ -21,6 +27,9 @@ public class UserService {
 
     @Autowired
     private UserMapper mapper;
+
+    @Autowired
+    private WebMapper webMapper;
 
     public String login(User user, HttpServletResponse response){
         String username = user.getUsername();
@@ -88,4 +97,112 @@ public class UserService {
         return "保存成功";
     }
 
+    public String modifyK(Map<String, String> map, HttpServletRequest request) {
+        String token = request.getHeader("token");
+        Claims claim = SafeJwtUtil.getClaim(token);
+        Integer userId = (Integer) claim.get("id");
+
+        String oldK = map.get("old_k");
+        String newk = map.get("new_k");
+
+        String salt = mapper.selectSaltByUserId(userId);
+        String encodeK = MD5Utils.getMd5Pwd(oldK, salt);
+        String databaseK = mapper.selectKByUserId(userId);
+        if (StringUtils.isEmpty(databaseK)){
+            return "请先设置K密码";
+        }
+        if (!databaseK.equals(encodeK)){
+            return "K密码错误";
+        }
+        if (!validatePassword(newk)){
+            return "密码格式不正确，要求密码包含大小写字母、数字和特殊字符，并且长度在8到16位之间";
+        }
+
+
+
+        List<Web> web1 = webMapper.selectWebByUserId(userId);
+        List<Web> webs = new LinkedList<>();
+        for (int i = 0; i < web1.size(); i++) {
+            Web web = web1.get(i);
+            String url = web.getUrl();
+            String webUsername = web.getWebUsername();
+            String webPassword = web.getWebPassword();
+            String eventReminder = web.getEventReminder();
+
+            try {
+                url = EncryptionUtils.decrypt(url,encodeK);
+                webPassword = EncryptionUtils.decrypt(webPassword,encodeK);
+                webUsername = EncryptionUtils.decrypt(webUsername,encodeK);
+//                eventReminder = EncryptionUtils.decrypt(eventReminder,encodeK);
+
+                Web web2 = new Web();
+                web2.setId(web.getId());
+                web2.setUrl(url);
+                web2.setWebPassword(webPassword);
+                web2.setWebUsername(webUsername);
+                web2.setEventReminder(eventReminder);
+
+                webs.add(web2);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "解密失败";
+            }
+        }
+
+        encodeK = MD5Utils.getMd5Pwd(newk, salt);
+
+        for (int i = 0; i < webs.size(); i++) {
+            Web web = webs.get(i);
+            String kPassword = encodeK;
+            String url = web.getUrl();
+            String webUsername = web.getWebUsername();
+            String webPassword = web.getWebPassword();
+//            String eventReminder = web.getEventReminder();
+
+            try {
+                url = EncryptionUtils.encrypt(url,kPassword);
+                webPassword = EncryptionUtils.encrypt(webPassword,kPassword);
+                webUsername = EncryptionUtils.encrypt(webUsername,kPassword);
+//                eventReminder = EncryptionUtils.encrypt(eventReminder,kPassword);
+                //新密文
+                webMapper.updateById(web.getId(),userId,url,webUsername,webPassword,"eventReminder");
+
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "K密码修改失败，请联系管理员";
+            }
+        }
+
+        mapper.saveK(encodeK,userId);
+        return "K密码修改成功";
+
+    }
+
+    public String modifyPassword(Map<String, String> map, HttpServletRequest request) {
+        String token = request.getHeader("token");
+        Claims claim = SafeJwtUtil.getClaim(token);
+        Integer userId = (Integer) claim.get("id");
+
+        String oldPassword = map.get("old_password");
+        String newPassword = map.get("new_password");
+
+        String salt = mapper.selectSaltByUserId(userId);
+        String encodePassword = MD5Utils.getMd5Pwd(oldPassword, salt);
+
+        String databaseP = mapper.selectPassword(encodePassword);
+
+        if (StringUtils.isEmpty(databaseP)){
+            return "旧密码错误";
+        }
+
+        if (!validatePassword(newPassword)){
+            return "密码格式不正确，要求密码包含大小写字母、数字和特殊字符，并且长度在8到16位之间";
+        }
+        newPassword = MD5Utils.getMd5Pwd(newPassword,salt);
+        mapper.updateP(newPassword,userId);
+        return "修改成功";
+
+    }
 }

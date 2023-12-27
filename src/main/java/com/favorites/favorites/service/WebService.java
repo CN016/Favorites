@@ -43,7 +43,7 @@ public class WebService {
 
             mapper.saveTheWeb(userId,url,webUsername,webPassword,eventReminder);
 
-            return "网站信息保存成功";
+            return "网站信息添加成功";
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -79,13 +79,14 @@ public class WebService {
                 url = EncryptionUtils.decrypt(url,kPassword);
                 webPassword = EncryptionUtils.decrypt(webPassword,kPassword);
                 webUsername = EncryptionUtils.decrypt(webUsername,kPassword);
-                eventReminder = EncryptionUtils.decrypt(eventReminder,kPassword);
+//                eventReminder = EncryptionUtils.decrypt(eventReminder,kPassword);
 
                 Web web2 = new Web();
+                web2.setId(web.getId());
                 web2.setUrl(url);
                 web2.setWebPassword(webPassword);
                 web2.setWebUsername(webUsername);
-                web2.setEventReminder(eventReminder);
+                web2.setEventReminder(null);
 
                 webs.add(web2);
 
@@ -98,4 +99,51 @@ public class WebService {
 
     }
 
+    public Object add(HttpServletRequest request, Web web) {
+        String token = request.getHeader("token");
+        Claims claim = SafeJwtUtil.getClaim(token);
+        Integer userId = (Integer) claim.get("id");
+
+        web.setUserId(userId);
+        mapper.saveTheWeb(web.getUserId(), web.getUrl(), web.getWebUsername(), web.getWebPassword(), web.getEventReminder());
+
+        return "success";
+
+    }
+
+    public Object delete(HttpServletRequest request, String id) {
+        String token = request.getHeader("token");
+        Claims claim = SafeJwtUtil.getClaim(token);
+        Integer userId = (Integer) claim.get("id");
+
+        mapper.deleteById(id,userId);
+        return "删除成功";
+    }
+
+    public Object modify(Web web, HttpServletRequest request) {
+        String token = request.getHeader("token");
+        Claims claim = SafeJwtUtil.getClaim(token);
+        Integer userId = (Integer) claim.get("id");
+
+        String kPassword = userMapper.selectKByUserId(userId);
+        String url = web.getUrl();
+        String webUsername = web.getWebUsername();
+        String webPassword = web.getWebPassword();
+        String eventReminder = web.getEventReminder();
+
+        try {
+            url = EncryptionUtils.encrypt(url,kPassword);
+            webPassword = EncryptionUtils.encrypt(webPassword,kPassword);
+            webUsername = EncryptionUtils.encrypt(webUsername,kPassword);
+//            eventReminder = EncryptionUtils.encrypt(eventReminder,kPassword);
+
+            mapper.updateById(web.getId(),userId,url,webUsername,webPassword,"eventReminder");
+
+            return "网站信息更新成功";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "加密失败";
+        }
+    }
 }
